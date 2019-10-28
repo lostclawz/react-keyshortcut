@@ -2,14 +2,17 @@ import * as R from 'ramda';
 import React from 'react';
 
 
-const possibleModifiers = {
+const modifierDefaults = {
    altKey: false,
    ctrlKey: false,
    shiftKey: false,
    metaKey: false,
 };
+const possibleModifiers = R.keys(modifierDefaults);
 
-const redundantKeys = ['Control', 'Meta', 'Alt', 'Shift'];
+// ignore these when logging, they cause duplicate messages
+const REDUNDANT_KEYS = ['Control', 'Meta', 'Alt', 'Shift'];
+const isRedundantKey = k => REDUNDANT_KEYS.includes(k);
 
 const liftIntoArray = R.ifElse(
    Array.isArray,
@@ -22,9 +25,6 @@ const notIn = R.complement(R.includes);
 const valueNotIn = R.flip(notIn);
 
 const defaultToArray = R.defaultTo([]);
-
-// ignore these when logging, they cause duplicate messages
-const isRedundantKey = R.includes(R.__, redundantKeys);
 
 const logKey = (key, modifiers, labels = []) => {
    if (isRedundantKey(key)) {
@@ -39,15 +39,18 @@ const logKey = (key, modifiers, labels = []) => {
    );
 };
 
-const filterToModifiers = R.pick(
-   R.keys(possibleModifiers)
-);
+const filterToModifiers = R.pick(possibleModifiers);
 const filterTrueModifiers = R.compose(
    R.filter(R.equals(true)),
    filterToModifiers
 );
+const modifiersMatch = R.eqBy(filterToModifiers);
 
-export const modString = R.compose(
+/**
+ * Return a string of modifier keys from a keyboard
+ * event separated by a space.
+ */
+export const modifierString = R.compose(
    R.join(' '),
    R.map(R.replace('Key', '')),
    R.keys,
@@ -62,7 +65,7 @@ export const filterLabels = R.into(
    )
 );
 
-export const loggingSomewhere = R.compose(
+export const isLoggingOn = R.compose(
    R.any(R.prop('log')),
    R.reduce(R.concat, []),
    R.values,
@@ -74,15 +77,10 @@ export const KeyContext = () => {
    // number of registered listeners (for listener ID)
    let listenerCount = 0;
 
-   const isGoodKey = (e, k) => R.equals(
-      filterToModifiers(e),
-      filterToModifiers(k)
-   );
-
    const listener = (e) => {
       const handlers = defaultToArray(listeningFor[e.key]);
       const firedActions = R.reduce((acc, k) => {
-         if (isGoodKey(e, k)) {
+         if (modifiersMatch(e, k)) {
             const next = acc.concat(k);
             if (typeof k.action === 'function') {
                k.action(e);
@@ -100,8 +98,8 @@ export const KeyContext = () => {
          return acc;
       }, [], handlers);
 
-      if (loggingSomewhere(listeningFor)) {
-         logKey(e.key, modString(e), filterLabels(firedActions));
+      if (isLoggingOn(listeningFor)) {
+         logKey(e.key, modifierString(e), filterLabels(firedActions));
       }
    };
    if (typeof document !== 'undefined') {
@@ -127,9 +125,8 @@ export const KeyContext = () => {
          const id = listenerCount;
 
          const keyData = {
-            ...possibleModifiers,
+            ...modifierDefaults,
             ...modifiers,
-            modifiers,
             id,
             key,
             action,
@@ -151,9 +148,8 @@ export const KeyContext = () => {
       },
       removeListener(id) {
          const ids = liftIntoArray(id);
-         const notInIds = valueNotIn(ids);
          const filterIds = R.filter(
-            R.compose(notInIds, R.prop('id')),
+            R.compose(valueNotIn(ids), R.prop('id')),
          );
          listeningFor = R.map(filterIds, listeningFor);
       },
