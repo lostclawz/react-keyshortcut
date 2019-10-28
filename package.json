@@ -1,0 +1,51 @@
+{
+   "name": "react-keyshortcut",
+   "version": "0.0.1",
+   "description": "",
+   "main": "src/KeyShortcut.jsx",
+   "scripts": {
+      "test": "npx mocha 'src/**/test-*.{js,jsx}' --recursive --watch -r ./src/tests/mocha-setup.js"
+   },
+   "engines": {
+      "node": ">=10.0.0"
+   },
+   "babel": {
+      "presets": [
+         "@babel/env",
+         "@babel/react"
+      ],
+      "plugins": [
+         "ramda"
+      ]
+   },
+   "author": {
+      "name": "Philip Kuperberg",
+      "email": "philipkuperberg@gmail.com",
+      "url": "http://philipkuperberg.com/"
+   },
+   "license": "ISC",
+   "repository": {
+      "type": "github",
+      "url": "https://github.com/lostclawz/react-keyshortcut"
+   },
+   "dependencies": {
+      "@babel/cli": "^7.6.4",
+      "@babel/core": "^7.6.4",
+      "@babel/polyfill": "^7.6.0",
+      "@babel/preset-env": "^7.6.3",
+      "@babel/preset-react": "^7.6.3",
+      "@babel/register": "^7.6.2",
+      "babel-loader": "^8.0.6",
+      "babel-plugin-ramda": "^2.0.0",
+      "chai": "^4.2.0",
+      "enzyme": "^3.10.0",
+      "enzyme-adapter-react-16": "^1.15.0",
+      "jsdom": "^15.2.0",
+      "jsdom-global": "^3.0.2",
+      "mocha": "^6.2.2",
+      "ramda": "^0.26.1",
+      "react": "^16.10.2",
+      "react-dom": "^16.11.0",
+      "sinon": "^7.5.0"
+   }
+}
