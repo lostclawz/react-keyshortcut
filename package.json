@@ -35,7 +35,6 @@
       "@babel/preset-env": "^7.6.3",
       "@babel/preset-react": "^7.6.3",
       "@babel/register": "^7.6.2",
-      "babel-loader": "^8.0.6",
       "babel-plugin-ramda": "^2.0.0",
       "chai": "^4.2.0",
       "enzyme": "^3.10.0",
