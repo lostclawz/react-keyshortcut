@@ -135,68 +135,72 @@ describe('KeyShortcut', () => {
       expect(callback.calledOnce).to.be.true;
    });
 
-   it('has a modifierString logging tool', () => {
-      expect(modifierString({
-         ctrlKey: true,
-      })).to.equal('ctrl');
-      expect(modifierString({
-         ctrlKey: false,
-         altKey: true,
-      })).to.equal('alt');
-   });
-
-   it('logs a message to the console when log prop is true', () => {
-      const log = sinon.fake();
-      sinon.replace(console, 'log', log);
-      wrapper = mount(
-         <KeyShortcut alt k="c" action={R.identity} log />
-      );
-      fakeKeyDown('c', { altKey: true });
-      expect(log.callCount).to.equal(1);
-   });
-
-   it('does not log more than once if more than one component is rendered with log', () => {
-      const log = sinon.fake();
-      sinon.replace(console, 'log', log);
-      wrapper = mount(
-         <>
+   describe('Logging functionality', () => {
+      it('has a modifierString logging tool', () => {
+         expect(modifierString({
+            ctrlKey: true,
+         })).to.equal('ctrl');
+         expect(modifierString({
+            ctrlKey: false,
+            altKey: true,
+         })).to.equal('alt');
+      });
+   
+      it('logs a message to the console when log prop is true', () => {
+         const log = sinon.fake();
+         sinon.replace(console, 'log', log);
+         wrapper = mount(
             <KeyShortcut alt k="c" action={R.identity} log />
-            <KeyShortcut ctrl k="x" action={R.identity} log />
-         </>
-      );
-      fakeKeyDown('c', { altKey: true });
-      expect(log.callCount).to.equal(1);
-   });
+         );
+         fakeKeyDown('c', { altKey: true });
+         expect(log.callCount).to.equal(1);
+      });
+   
+      it('does not log more than once if more than one component is rendered with log', () => {
+         const log = sinon.fake();
+         sinon.replace(console, 'log', log);
+         wrapper = mount(
+            <>
+               <KeyShortcut alt k="c" action={R.identity} log />
+               <KeyShortcut ctrl k="x" action={R.identity} log />
+            </>
+         );
+         fakeKeyDown('c', { altKey: true });
+         expect(log.callCount).to.equal(1);
+      });
+   
+      it('logs all key presses, even those not being listened to', () => {
+         const log = sinon.fake();
+         sinon.replace(console, 'log', log);
+         wrapper = mount(
+            <KeyShortcut alt k="c" action={R.identity} log />
+         );
+         fakeKeyDown('z');
+         expect(log.callCount).to.equal(1);
+      });
 
-   it('logs all key presses, even those not being listened to', () => {
-      const log = sinon.fake();
-      sinon.replace(console, 'log', log);
-      wrapper = mount(
-         <KeyShortcut alt k="c" action={R.identity} log />
-      );
-      fakeKeyDown('z');
-      expect(log.callCount).to.equal(1);
-   });
-   it('logs the label property as first argument, when available', () => {
-      const log = sinon.fake();
+      it('logs the label property as first argument, when available', () => {
+         const log = sinon.fake();
+         
+         sinon.replace(console, 'log', log);
+         wrapper = mount(
+            <KeyShortcut label="test" k="c" action={R.identity} log />
+         );
+         fakeKeyDown('c');
+         // log.lastCall.
+         expect(R.head(log.lastCall.args)).to.equal('%ctest');
+      });
       
-      sinon.replace(console, 'log', log);
-      wrapper = mount(
-         <KeyShortcut label="test" k="c" action={R.identity} log />
-      );
-      fakeKeyDown('c');
-      // log.lastCall.
-      expect(R.head(log.lastCall.args)).to.equal('%ctest');
-   });
-   it('tries to use the name of the called function if label is not given', () => {
-      const log = sinon.fake();
-      const testFunc = () => {};
-      sinon.replace(console, 'log', log);
-      wrapper = mount(
-         <KeyShortcut k="c" action={testFunc} log />
-      );
-      fakeKeyDown('c');
-      // log.lastCall.
-      expect(R.head(log.lastCall.args)).to.equal('%ctestFunc');
+      it('tries to use the name of the called function if label is not given', () => {
+         const log = sinon.fake();
+         const testFunc = () => {};
+         sinon.replace(console, 'log', log);
+         wrapper = mount(
+            <KeyShortcut k="c" action={testFunc} log />
+         );
+         fakeKeyDown('c');
+         // log.lastCall.
+         expect(R.head(log.lastCall.args)).to.equal('%ctestFunc');
+      })
    })
 });
