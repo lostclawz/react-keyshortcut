@@ -72,13 +72,19 @@ export const isLoggingOn = R.compose(
 );
 
 export const KeyContext = () => {
-   let listeningFor = {};
+   let listeningFor = new Map();
 
    // number of registered listeners (for listener ID)
    let listenerCount = 0;
+   
+   // Set of keys currently held, excluding modifiers
+   const keysHeld = new Set();
 
-   const listener = (e) => {
-      const handlers = defaultToArray(listeningFor[e.key]);
+   const listenerDown = (e) => {
+      keysHeld.add(e.key);
+      Array.from(keysHeld)
+
+      const handlers = defaultToArray(listeningFor.get([e.key]));
       const firedActions = R.reduce((acc, k) => {
          if (modifiersMatch(e, k)) {
             const next = acc.concat(k);
@@ -102,8 +108,14 @@ export const KeyContext = () => {
          logKey(e.key, modifierString(e), filterLabels(firedActions));
       }
    };
+
+   const listenerUp = (e) => {
+      keysHeld.delete(e.key);
+   }
+
    if (typeof document !== 'undefined') {
-      document.addEventListener('keydown', listener, false);
+      document.addEventListener('keydown', listenerDown, false);
+      document.addEventListener('keyup', listenerUp, false);
    }
    return {
       total() {
@@ -113,7 +125,7 @@ export const KeyContext = () => {
          return listeningFor;
       },
       addListener({
-         key,
+         keys,
          action,
          modifiers,
          preventDefault = false,
@@ -125,17 +137,18 @@ export const KeyContext = () => {
          const id = listenerCount;
 
          const keyData = {
+            keys: Object.keys(keys),
             ...modifierDefaults,
             ...modifiers,
             id,
-            key,
             action,
             preventDefault,
             stopPropagation,
             log,
             label,
          };
-
+         const currently = R.defaultTo([], listeningFor.get(keyHeld));
+         listeningFor.set(keysHeld, )
          listeningFor = R.over(
             R.lensProp(key),
             R.compose(
@@ -154,7 +167,8 @@ export const KeyContext = () => {
          listeningFor = R.map(filterIds, listeningFor);
       },
       cleanup() {
-         document.removeEventListener('keydown', listener, false);
+         document.removeEventListener('keydown', listenerDown, false);
+         document.removeEventListener('keyup', listenerUp, false);
       },
    };
 };
@@ -162,7 +176,6 @@ export const KeyContext = () => {
 export const keyContext = KeyContext();
 
 const KeyShortcut = ({
-   k,
    action,
    shift = false,
    alt = false,
@@ -173,6 +186,7 @@ const KeyShortcut = ({
    log = false,
    context = keyContext,
    label = false,
+   ...keys
 }) => {
    const actionRef = React.useRef();
 
@@ -180,7 +194,7 @@ const KeyShortcut = ({
    React.useEffect(() => {
       actionRef.current = action;
       const id = context.addListener({
-         key: k,
+         keys: keys,
          action: actionRef.current,
          modifiers: {
             altKey: alt,
